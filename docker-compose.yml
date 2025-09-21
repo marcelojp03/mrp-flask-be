@@ -1,0 +1,76 @@
+# version: '3.8'
+
+# services:
+#   web:
+#     build: .
+#     ports:
+#       - "8585:8585"
+#     environment:
+#       FLASK_ENV: development
+#       DATABASE_URL: "postgresql+psycopg2://postgres:admin123*@db:5433/BDCENTRAL"
+#       JWT_SECRET_KEY: "inf342"
+#       PDF_STORAGE: "/app/temp"
+#       IMAGENES_PRODUCTOS_CARPETA: "/app/imagenes/productos"
+#       IMAGENES_USUARIOS_CARPETA: "/app/imagenes/usuarios"
+#     depends_on:
+#       - db
+#     volumes:
+#       - .:/app
+#       - ./imagenes:/app/imagenes  # Para mantener las imágenes persistentes
+#       - ./temp:/app/temp           # Para almacenar PDFs y otros archivos temporales
+
+#   db:
+#     image: postgres:16
+#     environment:
+#       POSTGRES_USER: postgres
+#       POSTGRES_PASSWORD: admin123*
+#       POSTGRES_DB: BDCENTRAL
+#     ports:
+#       - "5433:5432"
+#     volumes:
+#       - pgdata:/var/lib/postgresql/data
+
+# volumes:
+#   pgdata:
+
+
+
+version: '3.8'
+
+services:
+
+  # db:
+  #     image: postgres:16
+  #     restart: always
+  #     environment:
+  #       POSTGRES_USER: postgres
+  #       POSTGRES_PASSWORD: admin123*
+  #       POSTGRES_DB: BDCENTRAL
+  #     ports:
+  #       - "5432:5432"
+  #     volumes:
+  #       - pgdata:/var/lib/postgresql/data
+  flask-app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8585:8585"
+    container_name: erp-be
+    environment:
+      FLASK_ENV: development
+      DATABASE_URL: "postgresql+psycopg2://postgres:admin123*@host.docker.internal:5432/BDCENTRAL"
+      #DATABASE_URL: "postgresql+psycopg2://postgres:admin123*@db:5432/BDCENTRAL"
+      #DATABASE_URL: "postgresql+psycopg2://postgres:admin123*@localhost:5432/BDCENTRAL"
+      JWT_SECRET_KEY: "inf342"
+      # PDF_STORAGE: "/app/temp"
+      # IMAGENES_PRODUCTOS_CARPETA: "/app/imagenes/productos"
+      # IMAGENES_USUARIOS_CARPETA: "/app/imagenes/usuarios"
+    # links: 
+    #     - db
+    # volumes:
+    #   - .:/app
+    #   - ./imagenes:/app/imagenes  # Para mantener las imágenes persistentes
+    #   - ./temp:/app/temp           # Para almacenar PDFs y otros archivos temporales
+volumes:
+  pgdata:

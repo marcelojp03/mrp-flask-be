@@ -1,0 +1,13 @@
+ANTES DE EMPEZAR VERIFIQUE SI TIENE PYTHON INSTALADO EN SU ORDENADOR, CASO CONTRARIO CON CORRERA LA APLICACION
+TAMBIEN DEBE CREAR EN MYSQL LA BASE DE DATOS 'dbinf342'
+
+Paso 1: Si no visualizamos la carpeta 'env', abrimos una nueva terminal y ejecutamos el siguiente script "python -m venv env"
+Si la carpeta 'env' existe, borrela y ejecute "python -m venv env"
+Paso 2: Active el entorno virtual con el script "env/Scripts/activate"
+En caso de que le salga algun error de permisos, abra powershell y ejecute lo siguiente:
+    Get-ExecutionPolicy -List 
+    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+Paso 3: Una vez activado el entorno virtual, ejecute en la terminal "pip install -r requirements.txt"
+Paso 4: Una vez instaladas todas las dependencias, ejecutar la aplicacion con el comando "py run.py"
+    
+pip freeze > requirements.txtsss
