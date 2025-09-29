@@ -1,3 +1,4 @@
+#services/resource_service.py
 from typing import Optional, List
 from myapp import db
 from models.resource import Resource
@@ -39,24 +40,63 @@ class ResourceService:
         return True
 
     # === Menú por usuario (usado por /roles/menu/<user_id>) ===
-    def menu_for_user(self, user_id: int) -> List[dict]:
-        role_ids = [ur.role_id for ur in UserRole.query.filter_by(user_id=user_id).all()]
-        if not role_ids:
-            return []
-        rrs = RoleResource.query.filter(RoleResource.role_id.in_(role_ids)).all()
-        resources = {r.id: r for r in Resource.query.all()}
-        subresources = {s.id: s for s in Subresource.query.all()}
+    # def menu_for_user(self, user_id: int) -> List[dict]:
+    #     role_ids = [ur.role_id for ur in UserRole.query.filter_by(user_id=user_id).all()]
+    #     if not role_ids:
+    #         return []
+    #     rrs = RoleResource.query.filter(RoleResource.role_id.in_(role_ids)).all()
+    #     resources = {r.id: r for r in Resource.query.all()}
+    #     subresources = {s.id: s for s in Subresource.query.all()}
 
-        menu = {}
-        for rr in rrs:
-            res = resources.get(rr.resource_id)
-            sub = subresources.get(rr.subresource_id)
-            if not res: 
-                continue
-            if res.id not in menu:
-                menu[res.id] = {'id': res.id, 'name': res.name, 'description': res.description, 'subresources': []}
-            if sub:
-                menu[res.id]['subresources'].append({
-                    'id': sub.id, 'name': sub.name, 'description': sub.description, 'url': sub.url, 'icon': sub.icon
+    #     menu = {}
+    #     for rr in rrs:
+    #         res = resources.get(rr.resource_id)
+    #         sub = subresources.get(rr.subresource_id)
+    #         if not res: 
+    #             continue
+    #         if res.id not in menu:
+    #             menu[res.id] = {'id': res.id, 'name': res.name, 'description': res.description, 'subresources': []}
+    #         if sub:
+    #             menu[res.id]['subresources'].append({
+    #                 'id': sub.id, 'name': sub.name, 'description': sub.description, 'url': sub.url, 'icon': sub.icon
+    #             })
+    #     return list(menu.values())
+    def menu_for_user(self, user_id: int) -> List[dict]:
+        role_ids_subq = db.session.query(UserRole.role_id)\
+            .filter(UserRole.user_id == user_id).subquery()
+
+        rows = (
+            db.session.query(
+                Resource.id, Resource.name, Resource.description,
+                Subresource.id, Subresource.name, Subresource.description,
+                Subresource.url, Subresource.icon
+            )
+            .join(RoleResource, RoleResource.resource_id == Resource.id)
+            .outerjoin(Subresource, Subresource.id == RoleResource.subresource_id)
+            .filter(RoleResource.role_id.in_(db.session.query(role_ids_subq.c.role_id)))
+            .order_by(Resource.id.asc(), Subresource.id.asc())  # ← añade sort_order si lo creas
+            .all()
+        )
+
+        menu: dict[int, dict] = {}
+        seen_subs: set[int] = set()
+
+        for (res_id, res_name, res_desc,
+            sub_id, sub_name, sub_desc, sub_url, sub_icon) in rows:
+
+            if res_id not in menu:
+                menu[res_id] = {
+                    'id': res_id, 'name': res_name,
+                    'description': res_desc, 'subresources': []
+                }
+            if sub_id and sub_id not in seen_subs:
+                seen_subs.add(sub_id)
+                menu[res_id]['subresources'].append({
+                    'id': sub_id, 'name': sub_name,
+                    'description': sub_desc, 'url': sub_url, 'icon': sub_icon
                 })
-        return list(menu.values())
+
+        # opcional: filtra recursos sin subrecursos
+        return [r for r in menu.values() if r['subresources']]
+
+

@@ -23,8 +23,11 @@ try:
         role_resource_controller,
         auth_controller,
 
+        dashboard_controller,
+        user_organization_controller,
         org_controller,
         supplier_controller,
+        supplier_item_controller,
         stocks_controller,
         product_controller,
         product_warehouse_controller,
@@ -41,9 +44,12 @@ try:
     app.register_blueprint(role_resource_controller.role_resource_bp)
     app.register_blueprint(auth_controller.auth_bp)
 
+    app.register_blueprint(dashboard_controller.dashboard_bp)
+    app.register_blueprint(user_organization_controller.user_org_bp)
     app.register_blueprint(org_controller.org_bp)
     app.register_blueprint(stocks_controller.stocks_bp)
     app.register_blueprint(supplier_controller.supplier_bp)
+    app.register_blueprint(supplier_item_controller.supplier_item_bp)
     app.register_blueprint(product_controller.product_bp)
     app.register_blueprint(product_warehouse_controller.pw_bp)
     app.register_blueprint(warehouse_controller.warehouse_bp)
@@ -62,4 +68,4 @@ except Exception as e:
 if __name__ == '__main__':
     #app=create_app()
     #app.run(port=8585, debug=True)
-    app.run(host='0.0.0.0', port=8585, debug=True) 
+    app.run(host='0.0.0.0', port=4646, debug=True) 

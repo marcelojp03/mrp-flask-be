@@ -1,3 +1,4 @@
+#controllers/resource_controller.py
 from flask import Blueprint, request
 from app.responses import Responses
 from services.resource_service import ResourceService

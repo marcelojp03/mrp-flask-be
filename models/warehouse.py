@@ -1,7 +1,7 @@
 #models/warehouse.py
-from datetime import datetime
 
 from myapp import db
+from sqlalchemy import func
 
 
 class Warehouse(db.Model):
@@ -10,8 +10,8 @@ class Warehouse(db.Model):
     name = db.Column('name', db.String(100), nullable=False)
     location = db.Column('location', db.String(200))
     org_id = db.Column('org_id', db.Integer, db.ForeignKey('organization.id'), nullable=False, server_default=db.text('1'))
-    created_at = db.Column('created_at', db.TIMESTAMP, default=datetime.utcnow)
-    updated_at = db.Column('updated_at', db.TIMESTAMP, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column('created_at', db.TIMESTAMP, server_default=func.now())
+    updated_at = db.Column('updated_at', db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     # Relaciones
     product_warehouses = db.relationship('ProductWarehouse', back_populates='warehouse', lazy='dynamic')

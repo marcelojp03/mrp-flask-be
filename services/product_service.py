@@ -1,23 +1,33 @@
 # services/product_service.py
 from typing import Optional, List
+from datetime import datetime
 from myapp import db
 from models.product import Product
 
 class ProductService:
-    def list(self, org_id: int = None, only_active: bool = False) -> List[dict]:
+    def list(self, org_id: int = None, only_active: Optional[bool] = None) -> List[dict]:
+        """
+        - only_active is None  -> sin filtro por status (trae todos)
+        - only_active is True  -> solo activos
+        - only_active is False -> solo inactivos
+        """
         q = Product.query
-        if org_id is not None: q = q.filter_by(org_id=org_id)
-        if only_active: q = q.filter_by(status=True)
+        if org_id is not None:
+            q = q.filter_by(org_id=org_id)
+        if only_active is True:
+            q = q.filter_by(status=True)
+        elif only_active is False:
+            q = q.filter_by(status=False)
         return [p.serialize() for p in q.all()]
 
     def get(self, product_id: int) -> Optional[dict]:
+        # Devuelve el producto exista o no activo
         p = Product.query.get(product_id)
         return p.serialize() if p else None
 
     def create(self, org_id: int, code: str, name: str, description: str = None,
                item_type: str = 'FG', procurement_type: str = 'BUY', min_stock=0,
                unit_id: int = None, status: bool = True) -> dict:
-        # Validación simple S1
         tmp = Product(item_type=item_type)
         if tmp.requires_unit() and not unit_id:
             raise ValueError(f"unit_id es requerido para item_type '{item_type}'")
@@ -33,7 +43,8 @@ class ProductService:
 
     def update(self, product_id: int, **kwargs) -> Optional[dict]:
         p = Product.query.get(product_id)
-        if not p: return None
+        if not p:
+            return None
         for k in ('org_id','code','name','description','min_stock','procurement_type','item_type','unit_id','status'):
             if k in kwargs:
                 setattr(p, k, kwargs[k])
@@ -42,19 +53,28 @@ class ProductService:
             if p.requires_unit() and not p.unit_id:
                 raise ValueError(f"unit_id es requerido para item_type '{p.item_type}'")
 
+        p.updated_at = datetime.utcnow()
         db.session.commit()
         return p.serialize()
 
-    def delete_soft(self, product_id: int) -> Optional[dict]:
+    def delete_soft(self, product_id: int) -> bool:
         p = Product.query.get(product_id)
-        if not p: return None
+        if not p:
+            return False
+        if not p.status:
+            return True
         p.status = False
-        db.session.commit()
-        return p.serialize()
-
-    def delete_hard(self, product_id: int) -> bool:
-        p = Product.query.get(product_id)
-        if not p: return False
-        db.session.delete(p)
+        p.updated_at = datetime.utcnow()
         db.session.commit()
         return True
+
+    def reactivate(self, product_id: int) -> Optional[dict]:
+        p = Product.query.get(product_id)
+        if not p:
+            return None
+        if p.status:
+            return p.serialize()
+        p.status = True
+        p.updated_at = datetime.utcnow()
+        db.session.commit()
+        return p.serialize()
