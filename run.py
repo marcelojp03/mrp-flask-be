@@ -29,7 +29,7 @@ def audit_middleware(response):
                 user_id = None
                 org_id = None
             
-            from models.system_log import SystemLog
+            from app.models.system_log import SystemLog
             log = SystemLog(
                 user_id=user_id,
                 org_id=org_id,
@@ -47,8 +47,8 @@ def audit_middleware(response):
     return response
 
 try: 
-    # Registrar Blueprint S1
-    from controllers import (
+    # S1 controllers
+    from app.controllers import (
         role_controller, 
         user_controller, 
         user_role_controller,
@@ -70,7 +70,7 @@ try:
     )
     
     # S2 controllers
-    from controllers import (
+    from app.controllers import (
         public_controller,
         log_controller,
         report_controller,
@@ -82,7 +82,7 @@ try:
     )
     
     # S3 controllers
-    from controllers import (
+    from app.controllers import (
         bom_controller,
         work_order_controller
     )

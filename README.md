@@ -7,222 +7,184 @@ Backend Flask para sistema MRP (Material Requirements Planning) con arquitectura
 - **Framework**: Flask 3.x
 - **ORM**: SQLAlchemy 2.x
 - **Base de Datos**: PostgreSQL 14+
-- **Autenticación**: JWT (Flask-JWT-Extended)
-- **AI Integration**: OpenAI GPT-4
+- **Autenticación**: JWT custom
 - **Container**: Docker + AWS ECR
 
-## 📋 Características
+---
 
-### Sprint 1 - Core MRP
-- ✅ Autenticación JWT con multi-tenant (org_id)
-- ✅ Gestión de Usuarios, Roles y Permisos (ACL)
-- ✅ Inventario: Productos, Almacenes, Movimientos
-- ✅ Control de Stock en tiempo real
-- ✅ Gestión de Proveedores y Artículos de Proveedor
-- ✅ Dashboard con métricas clave
-- ✅ Menú dinámico basado en permisos
+## 🛠️ Instalación y Ejecución
 
-### Sprint 2 - SaaS Features
-- ✅ Landing pública y registro multi-organización
-- ✅ Auditoría automática de todas las operaciones
-- ✅ Exportación de reportes CSV
-- ✅ Backup completo en JSON (filtrado por org_id)
-- ✅ Health check endpoint
-- ✅ Reportes AI con lenguaje natural (OpenAI)
-- ✅ Manejo global de errores
-- ✅ Seeding de datos iniciales
+### 1️⃣ Requisitos Previos
+- Python 3.11+
+- PostgreSQL 14+
+- Git
 
-## 🛠️ Instalación
+### 2️⃣ Clonar e Instalar
 
-### 1. Clonar repositorio
 ```bash
-git clone <repo-url>
-cd mrp_flask_be
-```
+# Clonar repositorio
+git clone https://github.com/marcelojp03/mrp-flask-be.git
+cd mrp-flask-be
 
-### 2. Crear entorno virtual
-```bash
+# Crear entorno virtual
 python -m venv env
-# Windows
-.\env\Scripts\activate
-# Linux/macOS
-source env/bin/activate
-```
 
-### 3. Instalar dependencias
-```bash
+# Activar entorno virtual
+# Windows PowerShell:
+.\env\Scripts\activate
+# Linux/macOS:
+source env/bin/activate
+
+# Instalar dependencias
 pip install -r requirements.txt
 ```
 
-### 4. Configurar variables de entorno
-```bash
-# Copiar archivo de ejemplo
-cp .env.example .env
+### 3️⃣ Configurar Base de Datos
 
-# Editar .env con tus credenciales
-# Mínimo requerido:
-# - DB_USER, DB_PASS, DB_HOST, DB_NAME
-# - JWT_SECRET_KEY
-```
-
-### 5. Crear base de datos
 ```bash
-# PostgreSQL
+# Crear base de datos PostgreSQL
 createdb mrp
 
-# Inicializar tablas (automático al correr la app)
-python myapp.py
+# Configurar variables de entorno
+# Crear archivo .env con:
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=tu_usuario
+DB_PASS=tu_password
+DB_NAME=mrp
+JWT_SECRET_KEY=tu_secreto_jwt_seguro
 ```
 
-### 6. Seed de datos iniciales (opcional)
+**⚠️ IMPORTANTE**: Nunca commitear archivos `.env` con credenciales reales.
+
+### 4️⃣ Inicializar Base de Datos
+
 ```bash
-python seeds/init_data.py
+# Ejecutar migraciones
+python scripts/database/create_tables.py
+
+# Poblar datos iniciales (opcional)
+python scripts/database/populate_database.py
 ```
 
-## 🏃 Ejecución
+### 5️⃣ Ejecutar Aplicación
 
-### Desarrollo
 ```bash
-python myapp.py
-# Server: http://localhost:4646
+# Modo desarrollo
+python run.py
+
+# La aplicación estará disponible en:
+# http://localhost:4646
 ```
 
-### Docker
+### 6️⃣ Verificar Instalación
+
 ```bash
+# Test de conexión a DB
+python tests/integration/test_db_connection.py
+
+# Health check
+curl http://localhost:4646/health
+```
+
+---
+
+## 🐳 Ejecutar con Docker
+
+```bash
+# Build
 docker build -t mrp-backend .
+
+# Run
 docker run -p 4646:4646 \
   -e DB_HOST=host.docker.internal \
   -e DB_PASS=yourpassword \
   mrp-backend
-```
 
-### Docker Compose
-```bash
+# O usar Docker Compose
 docker-compose up -d
 ```
 
-## 🚢 Deploy a AWS ECR
-
-Ver documentación completa en [`scripts/README.md`](scripts/README.md)
-
-```bash
-# Windows PowerShell
-.\scripts\deploy-ecr.ps1
-
-# Linux/macOS
-./scripts/deploy-ecr.sh
-```
+---
 
 ## 📁 Estructura del Proyecto
 
 ```
 mrp_flask_be/
-├── app/                    # Configuración y utilidades
-│   ├── config.py          # Configuración por ambiente
-│   ├── responses.py       # Formato estándar de respuestas
-│   └── utils.py           # Utilidades comunes
-├── controllers/           # Endpoints REST (Blueprints)
-├── models/               # Modelos SQLAlchemy
-├── services/             # Lógica de negocio
-├── seeds/                # Scripts de inicialización
-├── scripts/              # Scripts de deployment
-├── docs/                 # Documentación del proyecto
-├── myapp.py             # Punto de entrada de la aplicación
-├── requirements.txt     # Dependencias Python
-├── Dockerfile           # Imagen Docker
-└── docker-compose.yml   # Orquestación local
+├── app/                    # Código fuente principal
+│   ├── controllers/       # Endpoints REST
+│   ├── models/           # Modelos SQLAlchemy
+│   ├── services/         # Lógica de negocio
+│   ├── entities/         # DTOs y entidades
+│   ├── config.py         # Configuración
+│   └── db.py             # Database setup
+├── migrations/           # SQL migrations
+├── seeds/               # Datos iniciales
+├── scripts/             # Scripts de utilidad
+│   ├── database/       # Scripts de BD
+│   ├── setup/          # Setup inicial
+│   ├── deploy/         # Deployment
+│   └── testing/        # Tests PowerShell
+├── tests/              # Tests
+│   └── integration/    # Tests de integración
+├── docs/               # Documentación
+├── run.py             # Punto de entrada
+└── requirements.txt   # Dependencias Python
 ```
 
-## 🔧 Configuración
+Ver documentación completa de estructura en [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md)
 
-El sistema usa variables de entorno para configuración (ver `.env.example`):
+---
 
-### Variables Principales
-| Variable | Descripción | Default |
-|----------|-------------|---------|
-| `FLASK_ENV` | Ambiente (development/production) | `development` |
-| `DB_HOST` | Host de PostgreSQL | `localhost` |
-| `DB_NAME` | Nombre de la base de datos | `mrp` |
-| `JWT_SECRET_KEY` | Secret para JWT | `uagrm123` |
+## 📖 Documentación
 
-### Ambientes
-- **Development**: `DevConfig` - Debug ON, SQL echo opcional
-- **Production**: `ProdConfig` - Debug OFF, variables obligatorias
+| Documento | Descripción |
+|-----------|-------------|
+| [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) | Estructura completa del proyecto |
+| [`docs/ENDPOINTS_COMPLETE_LIST.md`](docs/ENDPOINTS_COMPLETE_LIST.md) | Referencia de API |
+| [`docs/guides/`](docs/guides/) | Guías de uso |
 
-## 📡 API Endpoints
-
-### Públicos
-- `POST /api/public/signup` - Registro de nuevas organizaciones
-- `GET /api/public/plans` - Lista de planes SaaS
-- `GET /health` - Health check
-
-### Autenticación
-- `POST /api/auth/login` - Login con JWT
-- `POST /api/auth/refresh` - Refresh token
-
-### Inventario
-- `GET/POST/PUT/DELETE /api/products` - CRUD Productos
-- `GET/POST/PUT/DELETE /api/warehouses` - CRUD Almacenes
-- `POST /api/movements` - Registrar movimientos
-- `GET /api/stocks` - Consultar stock actual
-
-### Reportes
-- `GET /api/reports/products.csv` - Exportar productos CSV
-- `GET /api/reports/movements.csv` - Exportar movimientos CSV
-- `POST /api/reports/nl` - Reporte con lenguaje natural (AI)
-- `GET /api/logs` - Auditoría de operaciones
-- `GET /api/backup` - Backup completo JSON
-
-Ver documentación completa de endpoints en [`docs/`](docs/)
+---
 
 ## 🧪 Testing
 
 ```bash
-# Verificar archivos del sprint
-python verify_sprint.py
+# Tests de integración
+python tests/integration/test_fixed_endpoints.py
 
-# Ejecutar tests unitarios (si existen)
-pytest
+# Tests PowerShell (requiere servidor corriendo)
+.\scripts\testing\test-all-endpoints.ps1
 ```
-
-## 🔒 Seguridad
-
-- ✅ JWT con refresh tokens
-- ✅ Control de acceso basado en roles (RBAC)
-- ✅ Filtrado automático por org_id (multi-tenant)
-- ✅ Validación de permisos en cada endpoint
-- ✅ SQL Injection prevention (SQLAlchemy ORM)
-- ✅ Password encoding con bcrypt
-- ✅ Rate limiting en reportes AI
-
-## 📚 Documentación Adicional
-
-- [Sprint 1 Checklist](docs/SPRINT1_CHECKLIST.md)
-- [Sprint 2 Documentation](docs/SPRINT2_DOCS.md)
-- [Guía Completa Sprint Final](docs/README_SPRINT_FINAL.md)
-- [Scripts de Deploy](scripts/README.md)
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crea una rama feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add: AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📝 Licencia
-
-Proyecto académico - UAGRM Sistemas de Información 2
-
-## 👥 Autores
-
-- Equipo de desarrollo SI2 - UAGRM
-
-## 🆘 Soporte
-
-Para reportar bugs o solicitar features, usar GitHub Issues.
 
 ---
 
-**Versión**: Sprint 2 - 2025
-**Última actualización**: Enero 2025
+## 🚢 Deploy a AWS ECR
+
+```bash
+# Windows PowerShell
+.\scripts\deploy\deploy-ecr.ps1
+
+# Linux/macOS
+./scripts/deploy/deploy-ecr.sh
+```
+
+---
+
+## � Sprints Implementados
+
+- ✅ **Sprint 1**: Core MRP (Usuarios, Roles, Productos, Inventario)
+- ✅ **Sprint 2**: SaaS Multi-Tenant (Signup, Planes, Menú Dinámico)
+- ✅ **Sprint 3**: Producción (BOMs, Work Orders, Trazabilidad)
+- ⏳ **Sprint 4**: Planificación (MPS, MRP)
+- ⏳ **Sprint 5**: Analytics (Forecasting, IA)
+
+---
+
+## 🤝 Contribución
+
+Proyecto académico - UAGRM Sistemas de Información 2
+
+---
+
+**Versión**: Sprint 3 - 2025  
+**Repositorio**: [marcelojp03/mrp-flask-be](https://github.com/marcelojp03/mrp-flask-be)
