@@ -1,5 +1,5 @@
 #models/category.py
-from myapp import db
+from app.db import db
 from datetime import datetime
 
 class Category(db.Model):
@@ -22,7 +22,7 @@ class Category(db.Model):
 
     # estado = db.Column(db.Boolean, server_default='1')
     # subcategories = db.relationship('Subcategory', backref='category', lazy=True)
-    subcategories = db.relationship('Subcategory', back_populates='category', lazy=True)
+    # subcategories = db.relationship('Subcategory', back_populates='category', lazy=True)  # Comentado: Subcategory no existe
 
     def serialize(self):
         return {

@@ -1,5 +1,5 @@
 #models/organization.py
-from myapp import db
+from app.db import db
 
 
 class Organization(db.Model):

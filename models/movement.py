@@ -1,7 +1,7 @@
 #models/movement.py
 from datetime import datetime
 
-from myapp import db
+from app.db import db
 
 
 class Movement(db.Model):

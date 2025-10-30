@@ -3,11 +3,9 @@ from flask import Blueprint, request, g
 from app.responses import Responses
 from auth.decorators import auth_required # CLAIM
 from services.role_service import RoleService
-from services.resource_service import ResourceService  # <-- nuevo
 
 role_bp = Blueprint('roles', __name__, url_prefix='/api/roles')
 role_service = RoleService()
-resource_service = ResourceService()  # <-- nuevo
 
 @role_bp.route('', methods=['GET'])
 def list_roles():
@@ -42,14 +40,3 @@ def update_role(role_id):
         status=data.get('status')
     )
     return Responses.success(r, "Rol actualizado") if r else Responses.error("Rol no encontrado", 404)
-
-#@role_bp.route('/<int:user_id>/menu', methods=['GET'])  # opcional: ordena la ruta
-@role_bp.route('/menu', methods=['GET'])
-@auth_required
-#def menu_for_user(user_id):
-def my_menu():
-    try:
-        menu = resource_service.menu_for_user(g.user_id)  # <-- delega al ResourceService
-        return Responses.success(menu)
-    except Exception as ex:
-        return Responses.from_exception(ex)

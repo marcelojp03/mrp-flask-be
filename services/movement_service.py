@@ -1,7 +1,7 @@
 # services/movement_service.py
 from typing import Optional, List
 from decimal import Decimal
-from myapp import db
+from app.db import db
 from models.movement import Movement
 from models.product_warehouse import ProductWarehouse
 

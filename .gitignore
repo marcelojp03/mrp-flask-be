@@ -49,7 +49,17 @@ firebase.json
 # Ignorar directorios de entorno virtual de Python
 venv/
 env/*
+
+# Variables de entorno (IMPORTANTE: NO SUBIR CREDENCIALES)
 .env
+.env.local
+.env.*.local
+.env.backup
+
+# Archivos de configuración de entornos específicos con credenciales reales
+.env.production
+.env.staging
+.env.development  # Puedes commitear este si no tiene credenciales reales
 
 # Ignorar todos los archivos .log
 *.log

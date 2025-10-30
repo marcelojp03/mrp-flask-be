@@ -1,5 +1,5 @@
 #models/product_warehouse.py
-from myapp import db
+from app.db import db
 
 
 class ProductWarehouse(db.Model):

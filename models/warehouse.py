@@ -1,6 +1,6 @@
 #models/warehouse.py
 
-from myapp import db
+from app.db import db
 from sqlalchemy import func
 
 

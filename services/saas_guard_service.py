@@ -1,5 +1,5 @@
 # services/saas_guard_service.py
-from myapp import db
+from app.db import db
 from sqlalchemy import func
 from models.user import User
 from models.product import Product
@@ -45,3 +45,21 @@ class SaasGuardService:
                 .scalar())
         limits = self.subs.get_effective_limits(org_id)
         self._check_limit(used, limits['max_movements_per_day'], 'movimientos por día')
+
+    def assert_can_ai_reports_today(self, org_id: int):
+        """Valida rate-limit diario de reportes IA según plan"""
+        from datetime import datetime, timedelta
+        from models.report_audit import ReportAudit
+        
+        today = datetime.utcnow().date()
+        start = datetime(today.year, today.month, today.day)
+        end = start + timedelta(days=1)
+
+        used = (db.session.query(func.count(ReportAudit.id))
+                .filter(ReportAudit.org_id == org_id, ReportAudit.ts >= start, ReportAudit.ts < end)
+                .scalar())
+        
+        limits = self.subs.get_effective_limits(org_id)
+        max_ai = limits.get('max_ai_reports_per_day')
+        
+        self._check_limit(used, max_ai, 'reportes IA por día')

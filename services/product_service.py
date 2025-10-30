@@ -1,7 +1,7 @@
 # services/product_service.py
 from typing import Optional, List
 from datetime import datetime
-from myapp import db
+from app.db import db
 from models.product import Product
 
 class ProductService:
@@ -20,10 +20,15 @@ class ProductService:
             q = q.filter_by(status=False)
         return [p.serialize() for p in q.all()]
 
-    def get(self, product_id: int) -> Optional[dict]:
-        # Devuelve el producto exista o no activo
+    def get(self, product_id: int, org_id: int = None) -> Optional[dict]:
+        """Devuelve el producto si existe y pertenece a la org (si org_id es proporcionado)"""
         p = Product.query.get(product_id)
-        return p.serialize() if p else None
+        if not p:
+            return None
+        # Validar que pertenece a la organización
+        if org_id is not None and p.org_id != org_id:
+            return None
+        return p.serialize()
 
     def create(self, org_id: int, code: str, name: str, description: str = None,
                item_type: str = 'FG', procurement_type: str = 'BUY', min_stock=0,
@@ -41,11 +46,18 @@ class ProductService:
         db.session.commit()
         return p.serialize()
 
-    def update(self, product_id: int, **kwargs) -> Optional[dict]:
+    def update(self, product_id: int, org_id: int = None, **kwargs) -> Optional[dict]:
         p = Product.query.get(product_id)
         if not p:
             return None
-        for k in ('org_id','code','name','description','min_stock','procurement_type','item_type','unit_id','status'):
+        # Validar que pertenece a la organización
+        if org_id is not None and p.org_id != org_id:
+            return None
+            
+        # No permitir cambiar org_id
+        kwargs.pop('org_id', None)
+        
+        for k in ('code','name','description','min_stock','procurement_type','item_type','unit_id','status'):
             if k in kwargs:
                 setattr(p, k, kwargs[k])
 
@@ -57,9 +69,12 @@ class ProductService:
         db.session.commit()
         return p.serialize()
 
-    def delete_soft(self, product_id: int) -> bool:
+    def delete_soft(self, product_id: int, org_id: int = None) -> bool:
         p = Product.query.get(product_id)
         if not p:
+            return False
+        # Validar que pertenece a la organización
+        if org_id is not None and p.org_id != org_id:
             return False
         if not p.status:
             return True
@@ -68,9 +83,12 @@ class ProductService:
         db.session.commit()
         return True
 
-    def reactivate(self, product_id: int) -> Optional[dict]:
+    def reactivate(self, product_id: int, org_id: int = None) -> Optional[dict]:
         p = Product.query.get(product_id)
         if not p:
+            return None
+        # Validar que pertenece a la organización
+        if org_id is not None and p.org_id != org_id:
             return None
         if p.status:
             return p.serialize()

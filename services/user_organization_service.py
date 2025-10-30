@@ -1,6 +1,6 @@
 # services/user_org_service.py
 from typing import List, Optional
-from myapp import db
+from app.db import db
 from models.user_organization import UserOrganization
 
 class UserOrganizationService:

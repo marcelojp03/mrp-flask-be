@@ -1,6 +1,6 @@
 #models/user_organization.py
 from sqlalchemy import func
-from myapp import db
+from app.db import db
 from datetime import datetime
 
 class UserOrganization(db.Model):

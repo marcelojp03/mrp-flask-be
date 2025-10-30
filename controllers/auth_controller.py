@@ -23,17 +23,39 @@ def login():
     
 @auth_bp.route('/refresh', methods=['POST'])
 def refresh():
+    # Acepta refresh_token desde header Authorization o body
     auth = request.headers.get('Authorization', '')
-    if not auth.startswith('Bearer '):
-        return Responses.error("Token faltante", http_code=401, code="NO_TOKEN")
-    token = auth.split(' ', 1)[1].strip()
+    data = request.get_json() or {}
+    
+    token = None
+    if auth.startswith('Bearer '):
+        token = auth.split(' ', 1)[1].strip()
+    elif data.get('refresh_token'):
+        token = data['refresh_token']
+    
+    if not token:
+        return Responses.error("Refresh token faltante", http_code=401, code="NO_TOKEN")
 
     try:
-        data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'], options={"verify_exp": False})
+        payload = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        
+        # Verificar que sea un refresh token
+        if payload.get('type') != 'refresh':
+            return Responses.error("Token inválido (no es refresh token)", http_code=401, code="INVALID_TOKEN_TYPE")
+        
+    except jwt.ExpiredSignatureError:
+        return Responses.error("Refresh token expirado", http_code=401, code="TOKEN_EXPIRED")
     except jwt.InvalidTokenError:
-        return Responses.error("Token inválido", http_code=401, code="TOKEN_INVALID")
+        return Responses.error("Refresh token inválido", http_code=401, code="TOKEN_INVALID")
 
-    # opcional: valida jti en blacklist/rotación, etc.
-    from services.auth_service import AuthService
-    new_token = AuthService()._encode_token({'sub': data['sub'], 'email': data['email'], 'org_id': data.get('org_id', 1)})
-    return Responses.success({"token": new_token})
+    # Generar nuevo access_token
+    new_access_token = auth_service._encode_token({
+        'sub': payload['sub'],
+        'email': payload['email'],
+        'org_id': payload.get('org_id', 1)
+    }, expires_minutes=60)
+    
+    return Responses.success({
+        "access_token": new_access_token,
+        "token": new_access_token  # Alias por compatibilidad
+    }, message="Token renovado")

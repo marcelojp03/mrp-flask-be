@@ -1,6 +1,6 @@
 # services/subscription_service.py
 from datetime import datetime, timedelta
-from myapp import db
+from app.db import db
 from models.plan import Plan
 from models.org_subscription import OrgSubscription
 

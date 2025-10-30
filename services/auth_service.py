@@ -1,6 +1,6 @@
 # services/auth_service.py
 from datetime import datetime, timedelta
-from myapp import db
+from app.db import db
 from models.user import User
 from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
@@ -26,9 +26,10 @@ class AuthService:
 
     def login(self, email: str, password: str):
         u: User = User.query.filter_by(email=email).first()
-        print("usuario obtenido:", u.serialize() if u else None)
         if not u:
+            print("usuario no encontrado para email:", email)
             return None
+        print("usuario obtenido:", u.serialize())
         # Si las contraseñas fueron guardadas en claro, intenta plan B:
         ok = check_password_hash(u.password, password) if u.password else (u.password == password)
         print("verificación de contraseña:", ok)
@@ -38,15 +39,24 @@ class AuthService:
         # obtener org por defecto (o primera)
         org_id = uosvc.get_default_org_id(u.id) or 1
 
-        token = self._encode_token({'sub': u.id, 'email': u.email, 'org_id': org_id})
-        return {'token': token, 'user': u.serialize(), 'org_id': org_id}
+        # Generar access_token (1 hora) y refresh_token (7 días)
+        access_token = self._encode_token({'sub': u.id, 'email': u.email, 'org_id': org_id}, expires_minutes=60)
+        refresh_token = self._encode_token({'sub': u.id, 'email': u.email, 'org_id': org_id, 'type': 'refresh'}, expires_minutes=10080)  # 7 días
+        
+        return {
+            'token': access_token,  # Mantener por compatibilidad
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'user': u.serialize(),
+            'org_id': org_id
+        }
 
     def hash_password(self, password: str) -> str:
         return generate_password_hash(password)
 
     def verify(self, token: str):
         try:
-            data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            data = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
             return data
         except Exception:
             return None

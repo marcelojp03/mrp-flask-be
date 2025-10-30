@@ -1,5 +1,5 @@
 #models/drawer.py
-from myapp import db
+from app.db import db
 
 class Drawer(db.Model):
     __tablename__ = 'drawer'

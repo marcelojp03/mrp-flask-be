@@ -1,5 +1,5 @@
 from typing import Optional, List
-from myapp import db
+from app.db import db
 from models.subresource import Subresource
 from models.resource import Resource
 

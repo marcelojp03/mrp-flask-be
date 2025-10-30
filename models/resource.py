@@ -1,5 +1,5 @@
 # models/resource.py
-from myapp import db
+from app.db import db
 
 class Resource(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

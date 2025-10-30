@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from myapp import db
+from app.db import db
 
 class OrgSubscription(db.Model):
     __tablename__ = 'org_subscription'
@@ -16,6 +16,7 @@ class OrgSubscription(db.Model):
     max_products_override = db.Column(db.Integer, nullable=True)
     max_warehouses_override = db.Column(db.Integer, nullable=True)
     max_movements_per_day_override = db.Column(db.Integer, nullable=True)
+    # TODO: Agregar max_ai_reports_per_day_override en migración
 
     plan = db.relationship('Plan', lazy=True)
 
@@ -39,4 +40,5 @@ class OrgSubscription(db.Model):
             'max_products': self.max_products_override if self.max_products_override is not None else (p.max_products if p else None),
             'max_warehouses': self.max_warehouses_override if self.max_warehouses_override is not None else (p.max_warehouses if p else None),
             'max_movements_per_day': self.max_movements_per_day_override if self.max_movements_per_day_override is not None else (p.max_movements_per_day if p else None),
+            'max_ai_reports_per_day': (p.max_ai_reports_per_day if p else None),  # Sin override por ahora
         }

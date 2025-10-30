@@ -1,11 +1,11 @@
 #models/purchase_detail.py
-from myapp import db
+from app.db import db
 
 class PurchaseDetail(db.Model):
     __tablename__='purchase_detail'
     id = db.Column(db.Integer, primary_key=True)
     purchase_id = db.Column(db.Integer, db.ForeignKey('purchase.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.productid'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.DECIMAL(10, 2), nullable=False)
     total = db.Column(db.DECIMAL(10, 2), nullable=False)

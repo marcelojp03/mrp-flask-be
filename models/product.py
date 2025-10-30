@@ -1,6 +1,6 @@
 #models/product.py
 from datetime import datetime
-from myapp import db
+from app.db import db
 
 class Product(db.Model):
     __tablename__ = 'product'

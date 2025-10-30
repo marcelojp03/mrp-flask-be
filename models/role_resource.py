@@ -1,5 +1,5 @@
 #models/role_resource.py
-from myapp import db
+from app.db import db
 
 class RoleResource(db.Model):
     __tablename__='role_resource'

@@ -1,5 +1,5 @@
 #models/purchase.py
-from myapp import db
+from app.db import db
 from datetime import datetime
 
 class Purchase(db.Model):
@@ -9,9 +9,9 @@ class Purchase(db.Model):
     order_number = db.Column(db.Integer, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    # supplier references provider.providerid (provider table uses providerid PK)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('provider.providerid'), nullable=False)
-    warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.warehouseid'), nullable=False)
+    # supplier references supplier.id (supplier table)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
+    warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.id'), nullable=False)
     total = db.Column(db.DECIMAL(10, 2), nullable=False)
     status = db.Column(db.String(50), nullable=False, default='completed')
 

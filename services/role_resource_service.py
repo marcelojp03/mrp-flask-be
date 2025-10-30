@@ -1,5 +1,5 @@
 from typing import List
-from myapp import db
+from app.db import db
 from models.role_resource import RoleResource
 from models.role import Role
 from models.resource import Resource

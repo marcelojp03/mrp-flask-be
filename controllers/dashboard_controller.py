@@ -2,10 +2,12 @@ from flask import Blueprint, jsonify, g
 from app.responses import Responses
 from models.product import Product
 from models.movement import Movement
+from models.work_order import WorkOrder
 from services.stock_service import StockService
 from sqlalchemy import func
 from datetime import datetime, timedelta
-from myapp import db
+from app.db import db
+from auth.decorators import auth_required
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/api/dashboard')
 stock = StockService()
@@ -18,6 +20,7 @@ def _get_ctx():
     return org_id, roles, user_id
 
 @dashboard_bp.route('/kpis', methods=['GET'])
+@auth_required
 def kpis():
     org_id, roles, _ = _get_ctx()
 
@@ -39,21 +42,47 @@ def kpis():
                                Movement.created_at < end)
                        .scalar())
 
+    # S3 - KPIs de Producción (Work Orders)
+    work_orders_active = (db.session.query(func.count(WorkOrder.id))
+                          .filter(WorkOrder.org_id == org_id,
+                                  WorkOrder.status == WorkOrder.STATUS_IN_PROGRESS)
+                          .scalar())
+    
+    work_orders_finished_today = (db.session.query(func.count(WorkOrder.id))
+                                  .filter(WorkOrder.org_id == org_id,
+                                          WorkOrder.status == WorkOrder.STATUS_FINISHED,
+                                          WorkOrder.actual_end >= start,
+                                          WorkOrder.actual_end < end)
+                                  .scalar())
+    
+    # Materiales consumidos hoy (movimientos OUT con referencia WO)
+    materials_consumed_today = (db.session.query(func.sum(Movement.quantity))
+                                .filter(Movement.org_id == org_id,
+                                        Movement.movement_type == 'OUT',
+                                        Movement.reference_type == 'WO',
+                                        Movement.created_at >= start,
+                                        Movement.created_at < end)
+                                .scalar()) or 0
+
     # mock de cumplimiento (S1–S2)
     kpis = {
         'total_products': total_products,
         'low_stock_count': low,
         'movements_today': movements_today,
-        'plan_adherence': 0.92  # mock; reemplaza en S3–S4
+        'work_orders_active': work_orders_active,
+        'work_orders_finished_today': work_orders_finished_today,
+        'materials_consumed_today': float(materials_consumed_today),
+        'plan_adherence': 0.92  # mock; reemplaza en S4 con MPS/MRP real
     }
 
     # ejemplo de filtrado por rol: si no es Planner, ocultar ciertos KPIs
     if 'Planner' not in roles:
         kpis.pop('plan_adherence', None)
 
-    return jsonify(Responses.success(kpis))
+    return Responses.success(kpis)
 
 @dashboard_bp.route('/alerts', methods=['GET'])
+@auth_required
 def alerts():
     org_id, roles, _ = _get_ctx()
     # mock básico; en S3 puedes generar desde reglas reales
@@ -62,4 +91,4 @@ def alerts():
         {'type': 'INFO', 'message': '3 movimientos registrados hoy', 'severity': 'info'},
     ]
     # si no es Supervisor/Admin, podrías reducir verbosidad
-    return jsonify(Responses.success(data))
+    return Responses.success(data)

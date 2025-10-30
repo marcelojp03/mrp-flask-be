@@ -1,5 +1,5 @@
 from typing import Optional, List
-from myapp import db
+from app.db import db
 from models.user_role import UserRole
 from models.user import User
 from models.role import Role

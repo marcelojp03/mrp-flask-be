@@ -1,6 +1,6 @@
 # services/organization_service.py
 from typing import Optional, List
-from myapp import db
+from app.db import db
 from models.organization import Organization
 
 class OrganizationService:

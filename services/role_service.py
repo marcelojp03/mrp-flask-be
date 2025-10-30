@@ -1,6 +1,6 @@
 # services/role_service.py
 from typing import Optional, List
-from myapp import db
+from app.db import db
 from models.role import Role
 
 class RoleService:

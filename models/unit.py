@@ -1,5 +1,5 @@
 #models/unit.py
-from myapp import db
+from app.db import db
 
 class Unit(db.Model):
     __tablename__ = 'unit'

@@ -1,7 +1,7 @@
 # services/stock_service.py
 from typing import Optional, List, Dict
 from decimal import Decimal
-from myapp import db
+from app.db import db
 from models.product_warehouse import ProductWarehouse
 from models.product import Product
 from models.supplier_item import SupplierItem
@@ -10,6 +10,27 @@ def _to_float(x):
     return float(x) if x is not None else 0.0
 
 class StockService:
+    def get_stock(self, org_id: int, product_id: Optional[int] = None, warehouse_id: Optional[int] = None) -> List[dict]:
+        """Retorna stock actual filtrado por org_id, opcionalmente por product y/o warehouse"""
+        q = db.session.query(ProductWarehouse).join(Product).filter(Product.org_id == org_id)
+        
+        if product_id is not None:
+            q = q.filter(ProductWarehouse.product_id == product_id)
+        if warehouse_id is not None:
+            q = q.filter(ProductWarehouse.warehouse_id == warehouse_id)
+        
+        rows = q.all()
+        return [
+            {
+                'product_id': r.product_id,
+                'warehouse_id': r.warehouse_id,
+                'current_stock': _to_float(r.current_stock),
+                'product_code': r.product.code if r.product else None,
+                'product_name': r.product.name if r.product else None,
+            }
+            for r in rows
+        ]
+    
     def stock_by_product(self, product_id: int) -> float:
         rows = ProductWarehouse.query.filter_by(product_id=product_id).all()
         total = Decimal('0')

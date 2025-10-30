@@ -1,4 +1,4 @@
-from myapp import db
+from app.db import db
 
 class Plan(db.Model):
     __tablename__ = 'plan'
@@ -12,6 +12,7 @@ class Plan(db.Model):
     max_products = db.Column(db.Integer, nullable=False, server_default='200')
     max_warehouses = db.Column(db.Integer, nullable=False, server_default='2')
     max_movements_per_day = db.Column(db.Integer, nullable=False, server_default='500')
+    max_ai_reports_per_day = db.Column(db.Integer, nullable=False, server_default='10')  # Rate-limit IA
 
     # Feature flags (para “disimular” ventajas del Pro sin implementarlas aún)
     allow_bom = db.Column(db.Boolean, server_default=db.text('false'), nullable=False)
@@ -27,6 +28,7 @@ class Plan(db.Model):
                 'max_products': self.max_products,
                 'max_warehouses': self.max_warehouses,
                 'max_movements_per_day': self.max_movements_per_day,
+                'max_ai_reports_per_day': self.max_ai_reports_per_day,
             },
             'features': {
                 'allow_bom': self.allow_bom,

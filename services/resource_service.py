@@ -1,6 +1,6 @@
 #services/resource_service.py
 from typing import Optional, List
-from myapp import db
+from app.db import db
 from models.resource import Resource
 from models.user_role import UserRole
 from models.role_resource import RoleResource
@@ -39,28 +39,6 @@ class ResourceService:
         db.session.commit()
         return True
 
-    # === Menú por usuario (usado por /roles/menu/<user_id>) ===
-    # def menu_for_user(self, user_id: int) -> List[dict]:
-    #     role_ids = [ur.role_id for ur in UserRole.query.filter_by(user_id=user_id).all()]
-    #     if not role_ids:
-    #         return []
-    #     rrs = RoleResource.query.filter(RoleResource.role_id.in_(role_ids)).all()
-    #     resources = {r.id: r for r in Resource.query.all()}
-    #     subresources = {s.id: s for s in Subresource.query.all()}
-
-    #     menu = {}
-    #     for rr in rrs:
-    #         res = resources.get(rr.resource_id)
-    #         sub = subresources.get(rr.subresource_id)
-    #         if not res: 
-    #             continue
-    #         if res.id not in menu:
-    #             menu[res.id] = {'id': res.id, 'name': res.name, 'description': res.description, 'subresources': []}
-    #         if sub:
-    #             menu[res.id]['subresources'].append({
-    #                 'id': sub.id, 'name': sub.name, 'description': sub.description, 'url': sub.url, 'icon': sub.icon
-    #             })
-    #     return list(menu.values())
     def menu_for_user(self, user_id: int) -> List[dict]:
         role_ids_subq = db.session.query(UserRole.role_id)\
             .filter(UserRole.user_id == user_id).subquery()

@@ -1,5 +1,5 @@
 # models/role.py
-from myapp import db
+from app.db import db
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

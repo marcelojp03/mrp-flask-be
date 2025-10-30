@@ -1,5 +1,5 @@
 #models/supplier.py
-from myapp import db
+from app.db import db
 from datetime import datetime
 
 class Supplier(db.Model):
