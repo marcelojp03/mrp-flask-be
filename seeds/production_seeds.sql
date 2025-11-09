@@ -152,11 +152,6 @@ SELECT r.id, 'Roles', 'ABM roles', '/dashboard/roles', 'pi pi-shield'
 FROM resource r WHERE r.name = 'Administración'
   AND NOT EXISTS (SELECT 1 FROM subresource s WHERE s.resource_id = r.id AND s.name = 'Roles');
 
-INSERT INTO subresource (resource_id, name, description, url, icon)
-SELECT r.id, 'Recursos/ACL', 'ABM recursos y subrecursos', '/dashboard/acl', 'pi pi-list'
-FROM resource r WHERE r.name = 'Administración'
-  AND NOT EXISTS (SELECT 1 FROM subresource s WHERE s.resource_id = r.id AND s.name = 'Recursos/ACL');
-
 -- Reportes
 INSERT INTO subresource (resource_id, name, description, url, icon)
 SELECT r.id, 'Exportar CSV', 'Exportar datos a CSV', '/dashboard/reports/csv', 'pi pi-file-export'

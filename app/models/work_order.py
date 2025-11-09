@@ -58,7 +58,7 @@ class WorkOrder(db.Model):
             'warehouse_id': self.warehouse_id,
             'warehouse_name': self.warehouse.name if self.warehouse else None,
             'assigned_to': self.assigned_to,
-            'assigned_to_name': self.assigned_user.username if self.assigned_user else None,
+            'assigned_to_name': self.assigned_user.name if self.assigned_user else None,
             'reference': self.reference,
             'notes': self.notes,
             'planned_start': self.planned_start.isoformat() if self.planned_start else None,
@@ -68,5 +68,5 @@ class WorkOrder(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'created_by': self.created_by,
-            'created_by_name': self.creator.username if self.creator else None
+            'created_by_name': self.creator.name if self.creator else None
         }

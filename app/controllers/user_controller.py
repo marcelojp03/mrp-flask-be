@@ -1,15 +1,18 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, g
 from app.responses import Responses
 from app.services.user_service import UserService
 from app.services.user_role_service import UserRoleService
+from auth.decorators import auth_required
 
 user_bp = Blueprint('users', __name__, url_prefix='/api/users')
 user_service = UserService()
 user_role_service = UserRoleService()
 
 @user_bp.route('', methods=['GET'])
+@auth_required
 def list_users():
-    users = user_service.list()
+    # Filtrar usuarios por organización
+    users = user_service.list_by_org(g.org_id)
     return Responses.success(users)
 
 @user_bp.route('/<int:user_id>', methods=['GET'])

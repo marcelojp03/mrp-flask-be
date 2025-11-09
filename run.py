@@ -1,4 +1,10 @@
 # run.py
+from dotenv import load_dotenv
+import os
+
+# Cargar variables de entorno desde .env ANTES de importar config
+load_dotenv()
+
 from flask import Flask, request
 from flask_cors import CORS
 from app.config import Config

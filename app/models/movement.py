@@ -28,13 +28,23 @@ class Movement(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.TIMESTAMP, default=datetime.utcnow, nullable=False)
 
+    # Relaciones
+    product = db.relationship('Product', foreign_keys=[product_id], lazy='joined')
+    from_warehouse = db.relationship('Warehouse', foreign_keys=[from_warehouse_id], lazy='joined')
+    to_warehouse = db.relationship('Warehouse', foreign_keys=[to_warehouse_id], lazy='joined')
+    creator = db.relationship('User', foreign_keys=[created_by], lazy='joined')
+
     def serialize(self):
         return {
             'id': self.id,
             'org_id': self.org_id,
             'product_id': self.product_id,
+            'product_code': self.product.code if self.product else None,
+            'product_name': self.product.name if self.product else None,
             'from_warehouse_id': self.from_warehouse_id,
+            'from_warehouse_name': self.from_warehouse.name if self.from_warehouse else None,
             'to_warehouse_id': self.to_warehouse_id,
+            'to_warehouse_name': self.to_warehouse.name if self.to_warehouse else None,
             'movement_type': self.movement_type,
             'reason': self.reason,
             'quantity': float(self.quantity),
@@ -42,5 +52,6 @@ class Movement(db.Model):
             'reference_type': self.reference_type,
             'note': self.note,
             'created_by': self.created_by,
+            'created_by_name': self.creator.name if self.creator else None,
             'created_at': self.created_at,
         }

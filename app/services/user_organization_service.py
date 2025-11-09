@@ -4,6 +4,10 @@ from app.db import db
 from app.models.user_organization import UserOrganization
 
 class UserOrganizationService:
+    def list_all(self) -> List[dict]:
+        """Listar todas las relaciones usuario-organización"""
+        return [m.serialize() for m in UserOrganization.query.all()]
+    
     def list_by_user(self, user_id: int) -> List[dict]:
         return [m.serialize() for m in UserOrganization.query.filter_by(user_id=user_id).all()]
 

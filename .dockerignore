@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+README.md
+
+# Tests
+tests/
+scripts/old_tests/
+
+# Seeds scripts (no necesarios en producción)
+seeds/scripts/
+
+# Environment files (usar variables en ECS)
+.env
+.env.example
+.env.*
+
+# Migrations (ejecutar separadamente)
+migrations/
+
+# Package files
+package.json
+package-lock.json
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore

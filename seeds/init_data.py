@@ -120,7 +120,6 @@ def seed_resources():
             ('Recursos/ACL', '/dashboard/acl', 'pi pi-list', 'ABM recursos y subrecursos')
         ],
         'Reportes': [
-            ('Exportar CSV', '/dashboard/reports/csv', 'pi pi-file-export', 'Exportar datos a CSV'),
             ('Reportes IA', '/dashboard/reports/ai', 'pi pi-sparkles', 'Generador de reportes con IA')
         ],
         'Sistema': [

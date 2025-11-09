@@ -71,7 +71,8 @@ class BOMComponent(db.Model):
             'quantity': float(self.quantity) if self.quantity else 0,
             'scrap_percentage': float(self.scrap_percentage) if self.scrap_percentage else 0,
             'unit_id': self.unit_id,
-            'unit_name': self.unit.name if self.unit else None,
+            'unit_code': self.unit.code if self.unit else None,
+            'unit_description': self.unit.description if self.unit else None,
             'sequence': self.sequence,
             'notes': self.notes,
             'created_at': self.created_at.isoformat() if self.created_at else None

@@ -4,11 +4,22 @@ from app.db import db
 from app.models.user import User
 from app.models.user_role import UserRole
 from app.models.role import Role
+from app.models.user_organization import UserOrganization
 from werkzeug.security import generate_password_hash
 
 class UserService:
     def list(self) -> List[dict]:
         return [u.serialize() for u in User.query.all()]
+    
+    def list_by_org(self, org_id: int) -> List[dict]:
+        """Listar usuarios que pertenecen a una organización específica"""
+        user_ids = db.session.query(UserOrganization.user_id)\
+            .filter_by(org_id=org_id)\
+            .all()
+        user_ids = [uid[0] for uid in user_ids]
+        
+        users = User.query.filter(User.id.in_(user_ids)).all() if user_ids else []
+        return [u.serialize() for u in users]
 
     def get(self, user_id: int) -> Optional[dict]:
         u = User.query.get(user_id)

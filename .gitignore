@@ -68,15 +68,13 @@ node_modules/
 
 # Ignorar directorios de caché de Python
 __pycache__/
+*/__pycache__/
+**/__pycache__/
 
 # Ignorar archivos compilados de Python
 *.pyc
 *.pyo
 *.pyd
-
-app/*
-app/
-.app
 
 
 

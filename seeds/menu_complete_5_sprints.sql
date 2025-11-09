@@ -84,11 +84,6 @@ SELECT r.id, 'Roles', 'ABM roles', '/dashboard/roles', 'pi pi-shield'
 FROM resource r WHERE r.name = 'Administración'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO subresource (resource_id, name, description, url, icon)
-SELECT r.id, 'Recursos/ACL', 'ABM recursos y subrecursos', '/dashboard/acl', 'pi pi-list'
-FROM resource r WHERE r.name = 'Administración'
-ON CONFLICT DO NOTHING;
-
 -- ============================================================================
 -- SPRINT 2: SaaS + Logs + Reportes + Backup
 -- ============================================================================

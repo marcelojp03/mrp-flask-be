@@ -939,7 +939,86 @@ this.http.get('http://localhost:4646/api/dashboard/kpis', {
 
 ---
 
-## 📄 REPORTES CSV (ACTUALIZADO S3)
+## � REPORTES DE PRODUCCIÓN ✨ NUEVO S3
+**Base:** `/api/work-orders/reports`
+
+| Método | Endpoint | Descripción | Autenticación |
+|--------|----------|-------------|---------------|
+| GET | `/api/work-orders/reports/stats` | Estadísticas y KPIs de producción | ✅ JWT |
+
+**Query Params:**
+- `from` (YYYY-MM-DD): Fecha inicio (default: 30 días atrás)
+- `to` (YYYY-MM-DD): Fecha fin (default: hoy)
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "period": {
+      "from": "2024-11-07",
+      "to": "2024-12-07"
+    },
+    "summary": {
+      "total_work_orders": 15,
+      "total_quantity_planned": 205,
+      "total_quantity_finished": 23,
+      "by_status": {
+        "PLANNED": 7,
+        "IN_PROGRESS": 3,
+        "FINISHED": 3,
+        "CANCELLED": 2
+      },
+      "completion_rate": 20.0,
+      "efficiency_rate": 11.22,
+      "avg_completion_time_hours": 96.5
+    },
+    "top_boms": [
+      {
+        "bom_id": 1,
+        "product_id": 121,
+        "product_name": "Válvula Check 1/2\"",
+        "product_code": "VAL-CHK-12",
+        "work_orders_count": 3,
+        "total_quantity": 27
+      }
+    ],
+    "top_products": [
+      {
+        "product_id": 121,
+        "product_name": "Válvula Check 1/2\"",
+        "product_code": "VAL-CHK-12",
+        "total_quantity": 27,
+        "orders_count": 3
+      }
+    ],
+    "monthly_production": [
+      {
+        "month": "2024-11",
+        "planned": 7,
+        "in_progress": 3,
+        "finished": 3,
+        "cancelled": 2,
+        "total": 15
+      }
+    ]
+  },
+  "message": "Estadísticas de producción generadas"
+}
+```
+
+**KPIs Incluidos:**
+- Total de órdenes por estado
+- Tasa de completitud (% finalizadas)
+- Eficiencia (unidades terminadas vs planificadas)
+- Top 5 BOMs más utilizadas
+- Top 5 productos más producidos
+- Tendencia mensual de producción
+- Tiempo promedio de producción (horas)
+
+---
+
+## �📄 REPORTES CSV (ACTUALIZADO S3)
 **Base:** `/api/reports`
 
 | Método | Endpoint | Descripción | Autenticación |
@@ -955,7 +1034,7 @@ this.http.get('http://localhost:4646/api/dashboard/kpis', {
 
 ---
 
-## �📈 RESUMEN
+## 📈 RESUMEN
 
 ### SPRINT 1 - Core MRP (20 blueprints)
 - Autenticación (login, refresh)
@@ -977,12 +1056,13 @@ this.http.get('http://localhost:4646/api/dashboard/kpis', {
 - **BOMs** - Lista de Materiales con componentes y scrap
 - **Work Orders** - Órdenes de producción con ciclo completo:
   - Creación → Validación de stock → Consumo de materiales → Producción → Stock final
+- **Reportes Producción** - Estadísticas, KPIs, Top BOMs/productos, tendencias
 - **Trazabilidad** - Movimientos referenciados a OPs
 - **Dashboard** - KPIs de producción en tiempo real
 - **Exportación** - CSV con referencias de producción
 
 ### SEGURIDAD IMPLEMENTADA
-- ✅ 30+ endpoints con JWT (2 nuevos en S3)
+- ✅ 31+ endpoints con JWT (7 nuevos en S3)
 - ✅ org_id en JWT payload (no manipulable)
 - ✅ Filtrado por organización en todos los endpoints
 - ✅ SaasGuard en Work Orders (start/finish)
@@ -991,16 +1071,16 @@ this.http.get('http://localhost:4646/api/dashboard/kpis', {
 ### ESTRUCTURA DE MENÚ (S1-S3)
 | Recurso | Subrecursos Sprint 3 |
 |---------|----------------------|
-| **Producción** | Lista de Materiales, Órdenes de Producción, Ejecución, Reportes Producción |
+| **Producción** | Lista de Materiales, Órdenes de Producción, Ejecución, **Reportes Producción** ✨ |
 | **Inicio** | Dashboard (con KPIs producción) |
 | **Inventario** | Movimientos (con ref WO) |
 
 ### PERMISOS POR ROL (S3)
 | Rol | Acceso Producción |
 |-----|-------------------|
-| **Admin** | Todos los subrecursos |
-| **Planner** | Lista de Materiales, Órdenes de Producción, Reportes Producción |
-| **Supervisor** | Órdenes de Producción, Reportes Producción |
+| **Admin** | Todos los subrecursos (incluye Reportes Producción) |
+| **Planner** | Lista de Materiales, Órdenes de Producción, **Reportes Producción** ✨ |
+| **Supervisor** | Órdenes de Producción, **Reportes Producción** ✨ |
 | **Operator** | Ejecución (iniciar/finalizar OPs) |
 
 ### SAAS LIMITS
@@ -1014,7 +1094,7 @@ this.http.get('http://localhost:4646/api/dashboard/kpis', {
 
 ---
 
-**TOTAL ENDPOINTS:** 78+ (6 nuevos en S3)  
+**TOTAL ENDPOINTS:** 79+ (7 nuevos en S3, incluye reportes de producción)  
 **BLUEPRINTS:** 29 (2 nuevos: bom_controller, work_order_controller)  
 **AUTENTICACIÓN:** JWT (Flask-JWT-Extended)  
 **BASE URL:** `http://localhost:4646`
@@ -1035,3 +1115,4 @@ this.http.get('http://localhost:4646/api/dashboard/kpis', {
 - Sistema de Alertas avanzado
 - Dashboard analítico
 - App Móvil (PWA)
+

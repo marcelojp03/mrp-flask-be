@@ -5,6 +5,11 @@ from app.responses import Responses
 user_org_bp = Blueprint('user_org', __name__, url_prefix='/api/user-org')
 svc = UserOrganizationService()
 
+@user_org_bp.route('', methods=['GET'])
+def list_all_user_orgs():
+    """Listar todas las relaciones usuario-organización"""
+    return jsonify(Responses.success(svc.list_all()))
+
 @user_org_bp.route('/<int:user_id>/memberships', methods=['GET'])
 def list_memberships(user_id):
     return jsonify(Responses.success(svc.list_by_user(user_id)))

@@ -43,3 +43,31 @@ class SupplierItemService:
         db.session.delete(si)
         db.session.commit()
         return True
+
+    def set_preferred(self, supplier_item_id: int) -> Optional[dict]:
+        """Marca este supplier_item como preferido y desmarca otros del mismo producto"""
+        si = SupplierItem.query.get(supplier_item_id)
+        if not si:
+            return None
+        
+        # Desmarcar otros supplier_items del mismo producto y org
+        SupplierItem.query.filter(
+            SupplierItem.product_id == si.product_id,
+            SupplierItem.org_id == si.org_id,
+            SupplierItem.id != si.id
+        ).update({'is_preferred': False})
+        
+        # Marcar este como preferido
+        si.is_preferred = True
+        db.session.commit()
+        return si.serialize()
+
+    def toggle_active(self, supplier_item_id: int) -> Optional[dict]:
+        """Activa/Desactiva el supplier_item"""
+        si = SupplierItem.query.get(supplier_item_id)
+        if not si:
+            return None
+        
+        si.is_active = not si.is_active
+        db.session.commit()
+        return si.serialize()

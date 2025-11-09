@@ -18,7 +18,7 @@ from .product_warehouse import ProductWarehouse
 from .movement import Movement
 from .supplier import Supplier
 from .supplier_item import SupplierItem
-from .category import Category
+# from .category import Category  # Categoria está en entities
 from .drawer import Drawer
 from .purchase import Purchase
 from .purchase_detail import PurchaseDetail
@@ -29,6 +29,10 @@ from .org_subscription import OrgSubscription
 from .user_organization import UserOrganization
 from .system_log import SystemLog
 from .report_audit import ReportAudit
+
+# Sprint 3 - Production
+from .bom import BOM
+from .work_order import WorkOrder
 
 __all__ = [
     # Core
@@ -48,7 +52,7 @@ __all__ = [
     'Movement',
     'Supplier',
     'SupplierItem',
-    'Category',
+    # 'Category',  # Categoria está en entities
     'Drawer',
     'Purchase',
     'PurchaseDetail',
@@ -59,4 +63,8 @@ __all__ = [
     'UserOrganization',
     'SystemLog',
     'ReportAudit',
+    
+    # Production (Sprint 3)
+    'BOM',
+    'WorkOrder',
 ]

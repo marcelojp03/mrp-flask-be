@@ -177,11 +177,6 @@ SELECT r.id, 'Roles', 'ABM roles', '/roles', 'pi pi-shield'
 FROM resource r WHERE r.name = 'Administración'
   AND NOT EXISTS (SELECT 1 FROM subresource s WHERE s.resource_id = r.id AND s.name = 'Roles');
 
-INSERT INTO subresource (resource_id, name, description, url, icon)
-SELECT r.id, 'Recursos/ACL', 'ABM recursos y subrecursos', '/acl', 'pi pi-list'
-FROM resource r WHERE r.name = 'Administración'
-  AND NOT EXISTS (SELECT 1 FROM subresource s WHERE s.resource_id = r.id AND s.name = 'Recursos/ACL');
-
 -- ============================================================================
 -- SPRINT 2: SaaS + Logs + Reportes + Backup (6 subrecursos)
 -- ============================================================================

@@ -9,6 +9,34 @@ from sqlalchemy.exc import IntegrityError
 bom_bp = Blueprint('boms', __name__)
 
 
+@bom_bp.route('/products-with-active-bom', methods=['GET'])
+@auth_required
+def get_products_with_active_bom():
+    """Obtener productos que tienen BOM activa (útil para crear Work Orders)"""
+    try:
+        # Obtener productos únicos con BOM activa
+        boms = BOM.query.filter_by(org_id=g.org_id, is_active=True).all()
+        
+        product_ids = list(set([bom.product_id for bom in boms]))
+        products = Product.query.filter(
+            Product.id.in_(product_ids),
+            Product.org_id == g.org_id
+        ).all()
+        
+        return Responses.success(
+            data=[{
+                'id': p.id,
+                'code': p.code,
+                'name': p.name,
+                'description': p.description,
+                'bom_version': next((b.version for b in boms if b.product_id == p.id), None)
+            } for p in products],
+            message=f'{len(products)} productos con BOM activa'
+        )
+    except Exception as e:
+        return Responses.error(f'Error al obtener productos: {str(e)}', 500)
+
+
 @bom_bp.route('', methods=['GET'])
 @auth_required
 def get_boms():
@@ -55,10 +83,26 @@ def create_bom():
     try:
         data = request.get_json()
         
+        # 🔍 LOG TEMPORAL: Ver qué está llegando
+        print("=" * 70)
+        print("📥 DATOS RECIBIDOS PARA CREAR BOM:")
+        print(f"   Datos completos: {data}")
+        print(f"   Tipo: {type(data)}")
+        if data:
+            for key, value in data.items():
+                if key == 'components':
+                    print(f"   - {key}: {len(value) if isinstance(value, list) else 'NO ES LISTA'} componentes")
+                    if isinstance(value, list) and len(value) > 0:
+                        print(f"      Primer componente: {value[0]}")
+                else:
+                    print(f"   - {key}: {value} (tipo: {type(value).__name__})")
+        print("=" * 70)
+        
         # Validaciones
         required_fields = ['product_id', 'version', 'components']
         for field in required_fields:
             if field not in data:
+                print(f"❌ FALTA CAMPO REQUERIDO: {field}")
                 return Responses.error(f'Campo requerido: {field}', 400)
         
         if not data.get('components'):

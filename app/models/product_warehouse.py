@@ -23,7 +23,10 @@ class ProductWarehouse(db.Model):
             'id': self.id,
             'product_id': self.product_id,
             'product_name': self.product.name if self.product else None,
+            'product_code': self.product.code if self.product else None,
+            'min_stock': float(self.product.min_stock) if self.product and self.product.min_stock is not None else 0.0,
             'warehouse_id': self.warehouse_id,
             'warehouse_name': self.warehouse.name if self.warehouse else None,
+            'location': self.warehouse.location if self.warehouse else None,
             'current_stock': float(self.current_stock) if self.current_stock is not None else 0.0,
         }

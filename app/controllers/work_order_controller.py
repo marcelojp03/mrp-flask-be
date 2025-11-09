@@ -8,8 +8,9 @@ from app.models.warehouse import Warehouse
 from app.models.product_warehouse import ProductWarehouse
 from app.models.movement import Movement
 from app.db import db
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
+from sqlalchemy import func
 
 work_order_bp = Blueprint('work_orders', __name__)
 
@@ -69,10 +70,21 @@ def create_work_order():
     try:
         data = request.get_json()
         
+        # 🔍 LOG TEMPORAL: Ver qué está llegando
+        print("=" * 70)
+        print("📥 DATOS RECIBIDOS PARA CREAR WORK ORDER:")
+        print(f"   Datos: {data}")
+        print(f"   Tipo: {type(data)}")
+        if data:
+            for key, value in data.items():
+                print(f"   - {key}: {value} (tipo: {type(value).__name__})")
+        print("=" * 70)
+        
         # Validaciones
         required_fields = ['product_id', 'quantity']
         for field in required_fields:
             if field not in data:
+                print(f"❌ FALTA CAMPO REQUERIDO: {field}")
                 return Responses.error(f'Campo requerido: {field}', 400)
         
         # Validar producto
@@ -160,11 +172,11 @@ def start_work_order(wo_id):
             
             # Verificar stock disponible
             pw = ProductWarehouse.query.filter_by(
-                productid=comp.component_id,
-                warehouseid=wo.warehouse_id
+                product_id=comp.component_id,
+                warehouse_id=wo.warehouse_id
             ).first()
             
-            current_stock = float(pw.stock) if pw else 0
+            current_stock = float(pw.current_stock) if pw else 0
             
             if current_stock < required_qty:
                 product = Product.query.get(comp.component_id)
@@ -206,17 +218,22 @@ def start_work_order(wo_id):
             
             # Actualizar stock en product_warehouse
             pw = ProductWarehouse.query.filter_by(
-                productid=comp.component_id,
-                warehouseid=wo.warehouse_id
+                product_id=comp.component_id,
+                warehouse_id=wo.warehouse_id
             ).first()
             
             if pw:
-                pw.stock = Decimal(str(float(pw.stock) - required_qty))
+                pw.current_stock = Decimal(str(float(pw.current_stock) - required_qty))
+            
+            # Obtener información del producto
+            product = Product.query.get(comp.component_id)
             
             movements_created.append({
+                'movement_id': movement.id if hasattr(movement, 'id') else None,
                 'product_id': comp.component_id,
-                'quantity': required_qty,
-                'movement_id': movement.id if hasattr(movement, 'id') else None
+                'product_code': product.code if product else None,
+                'product_name': product.name if product else None,
+                'quantity': required_qty
             })
         
         # Actualizar Work Order
@@ -279,18 +296,18 @@ def finish_work_order(wo_id):
         
         # Actualizar stock en product_warehouse
         pw = ProductWarehouse.query.filter_by(
-            productid=wo.product_id,
-            warehouseid=wo.warehouse_id
+            product_id=wo.product_id,
+            warehouse_id=wo.warehouse_id
         ).first()
         
         if pw:
-            pw.stock = Decimal(str(float(pw.stock) + produced_qty))
+            pw.current_stock = Decimal(str(float(pw.current_stock) + produced_qty))
         else:
             # Crear registro si no existe
             pw = ProductWarehouse(
-                productid=wo.product_id,
-                warehouseid=wo.warehouse_id,
-                stock=Decimal(str(produced_qty))
+                product_id=wo.product_id,
+                warehouse_id=wo.warehouse_id,
+                current_stock=Decimal(str(produced_qty))
             )
             db.session.add(pw)
         
@@ -308,9 +325,13 @@ def finish_work_order(wo_id):
             data={
                 'work_order': wo.to_dict(),
                 'movement': {
+                    'movement_id': movement.id if hasattr(movement, 'id') else None,
                     'product_id': wo.product_id,
+                    'product_code': wo.product.code,
+                    'product_name': wo.product.name,
                     'quantity': produced_qty,
-                    'warehouse_id': wo.warehouse_id
+                    'warehouse_id': wo.warehouse_id,
+                    'warehouse_name': wo.warehouse.name
                 }
             },
             message=f'Work Order finalizada. {produced_qty} unidades de {wo.product.name} agregadas al inventario'
@@ -348,3 +369,211 @@ def cancel_work_order(wo_id):
     except Exception as e:
         db.session.rollback()
         return Responses.error(f'Error al cancelar Work Order: {str(e)}', 500)
+
+
+# ============================================================================
+# REPORTES DE PRODUCCIÓN
+# ============================================================================
+
+@work_order_bp.route('/reports/stats', methods=['GET'])
+@auth_required
+def get_production_stats():
+    """
+    Estadísticas y KPIs de producción
+    Query params: 
+      - from (YYYY-MM-DD): Fecha inicio (por defecto: 30 días atrás)
+      - to (YYYY-MM-DD): Fecha fin (por defecto: hoy)
+    """
+    try:
+        # Filtros de fecha
+        date_to = request.args.get('to')
+        date_from = request.args.get('from')
+        
+        # Valores por defecto: últimos 30 días
+        if not date_to:
+            dt_to = datetime.utcnow()
+        else:
+            # Incluir todo el día final (hasta las 23:59:59)
+            dt_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1) - timedelta(seconds=1)
+        
+        if not date_from:
+            dt_from = dt_to - timedelta(days=30)
+        else:
+            # Iniciar desde las 00:00:00 del día
+            dt_from = datetime.strptime(date_from, '%Y-%m-%d')
+        
+        # Obtener Work Orders del período
+        work_orders = WorkOrder.query.filter(
+            WorkOrder.org_id == g.org_id,
+            WorkOrder.created_at >= dt_from,
+            WorkOrder.created_at <= dt_to
+        ).all()
+        
+        total = len(work_orders)
+        
+        # ========== KPIs Principales ==========
+        by_status = {
+            'PLANNED': 0,
+            'IN_PROGRESS': 0,
+            'FINISHED': 0,
+            'CANCELLED': 0
+        }
+        
+        total_quantity_planned = 0
+        total_quantity_finished = 0
+        
+        for wo in work_orders:
+            # Contar por estado
+            if wo.status == WorkOrder.STATUS_PLANNED:
+                by_status['PLANNED'] += 1
+            elif wo.status == WorkOrder.STATUS_IN_PROGRESS:
+                by_status['IN_PROGRESS'] += 1
+            elif wo.status == WorkOrder.STATUS_FINISHED:
+                by_status['FINISHED'] += 1
+            elif wo.status == WorkOrder.STATUS_CANCELLED:
+                by_status['CANCELLED'] += 1
+            
+            total_quantity_planned += wo.quantity or 0
+            if wo.status == WorkOrder.STATUS_FINISHED:
+                total_quantity_finished += wo.quantity or 0
+        
+        # Tasa de completitud
+        completion_rate = 0
+        if total > 0:
+            completion_rate = round(by_status['FINISHED'] / total * 100, 2)
+        
+        # Eficiencia de producción (unidades terminadas vs planificadas)
+        efficiency_rate = 0
+        if total_quantity_planned > 0:
+            efficiency_rate = round(total_quantity_finished / total_quantity_planned * 100, 2)
+        
+        # ========== Top BOMs Más Utilizadas ==========
+        bom_usage = {}
+        for wo in work_orders:
+            if wo.bom_id:
+                if wo.bom_id not in bom_usage:
+                    bom_usage[wo.bom_id] = {
+                        'count': 0,
+                        'total_quantity': 0,
+                        'bom': wo.bom
+                    }
+                bom_usage[wo.bom_id]['count'] += 1
+                bom_usage[wo.bom_id]['total_quantity'] += wo.quantity or 0
+        
+        # Top 5 BOMs
+        top_boms = sorted(bom_usage.values(), key=lambda x: x['count'], reverse=True)[:5]
+        top_boms_data = []
+        for item in top_boms:
+            bom = item['bom']
+            top_boms_data.append({
+                'bom_id': bom.id,
+                'product_id': bom.product_id,
+                'product_name': bom.product.name if bom.product else 'N/A',
+                'product_code': bom.product.code if bom.product else 'N/A',
+                'work_orders_count': item['count'],
+                'total_quantity': item['total_quantity']
+            })
+        
+        # ========== Productos Más Producidos ==========
+        product_production = {}
+        for wo in work_orders:
+            if wo.product_id:
+                if wo.product_id not in product_production:
+                    product_production[wo.product_id] = {
+                        'quantity': 0,
+                        'orders_count': 0,
+                        'product': wo.product
+                    }
+                product_production[wo.product_id]['quantity'] += wo.quantity or 0
+                product_production[wo.product_id]['orders_count'] += 1
+        
+        # Top 5 productos
+        top_products = sorted(product_production.values(), key=lambda x: x['quantity'], reverse=True)[:5]
+        top_products_data = []
+        for item in top_products:
+            product = item['product']
+            top_products_data.append({
+                'product_id': product.id,
+                'product_name': product.name,
+                'product_code': product.code,
+                'total_quantity': item['quantity'],
+                'orders_count': item['orders_count']
+            })
+        
+        # ========== Tendencia Mensual (últimos 6 meses) ==========
+        # Agrupar por mes
+        monthly_data = {}
+        for wo in work_orders:
+            if wo.created_at:
+                month_key = wo.created_at.strftime('%Y-%m')
+                if month_key not in monthly_data:
+                    monthly_data[month_key] = {
+                        'PLANNED': 0,
+                        'IN_PROGRESS': 0,
+                        'FINISHED': 0,
+                        'CANCELLED': 0,
+                        'total': 0
+                    }
+                
+                # Incrementar contador del estado correspondiente
+                if wo.status == WorkOrder.STATUS_PLANNED:
+                    monthly_data[month_key]['PLANNED'] += 1
+                elif wo.status == WorkOrder.STATUS_IN_PROGRESS:
+                    monthly_data[month_key]['IN_PROGRESS'] += 1
+                elif wo.status == WorkOrder.STATUS_FINISHED:
+                    monthly_data[month_key]['FINISHED'] += 1
+                elif wo.status == WorkOrder.STATUS_CANCELLED:
+                    monthly_data[month_key]['CANCELLED'] += 1
+                
+                monthly_data[month_key]['total'] += 1
+        
+        # Convertir a lista ordenada
+        monthly_production = [
+            {
+                'month': month,
+                'planned': data['PLANNED'],
+                'in_progress': data['IN_PROGRESS'],
+                'finished': data['FINISHED'],
+                'cancelled': data['CANCELLED'],
+                'total': data['total']
+            }
+            for month, data in sorted(monthly_data.items())
+        ]
+        
+        # ========== Tiempo Promedio de Producción ==========
+        completion_times = []
+        for wo in work_orders:
+            if wo.status == WorkOrder.STATUS_FINISHED and wo.actual_start and wo.actual_end:
+                delta = wo.actual_end - wo.actual_start
+                completion_times.append(delta.total_seconds() / 3600)  # Convertir a horas
+        
+        avg_completion_time = 0
+        if completion_times:
+            avg_completion_time = round(sum(completion_times) / len(completion_times), 2)
+        
+        # ========== Respuesta ==========
+        return Responses.success(
+            data={
+                'period': {
+                    'from': dt_from.strftime('%Y-%m-%d'),
+                    'to': dt_to.strftime('%Y-%m-%d')
+                },
+                'summary': {
+                    'total_work_orders': total,
+                    'total_quantity_planned': total_quantity_planned,
+                    'total_quantity_finished': total_quantity_finished,
+                    'by_status': by_status,
+                    'completion_rate': completion_rate,
+                    'efficiency_rate': efficiency_rate,
+                    'avg_completion_time_hours': avg_completion_time
+                },
+                'top_boms': top_boms_data,
+                'top_products': top_products_data,
+                'monthly_production': monthly_production
+            },
+            message='Estadísticas de producción generadas'
+        )
+        
+    except Exception as e:
+        return Responses.error(f'Error al generar estadísticas: {str(e)}', 500)
+
