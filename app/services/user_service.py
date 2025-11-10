@@ -76,3 +76,12 @@ class UserService:
         db.session.delete(u)
         db.session.commit()
         return True
+
+    def reset_password(self, user_id: int, new_password: str) -> bool:
+        """Resetear la contraseña de un usuario (para admin)"""
+        u = User.query.get(user_id)
+        if not u: return False
+        
+        u.password = generate_password_hash(new_password) if new_password and not new_password.startswith('pbkdf2:') else new_password
+        db.session.commit()
+        return True

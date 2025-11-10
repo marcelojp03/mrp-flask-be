@@ -79,3 +79,25 @@ def delete_user(user_id):
     if not ok:
         return Responses.error("Usuario no encontrado", http_code=404)
     return Responses.success(message="Usuario eliminado")
+
+@user_bp.route('/<int:user_id>/password', methods=['PUT'])
+@auth_required
+def reset_user_password(user_id):
+    """Endpoint para que el admin resetee la contraseña de cualquier usuario"""
+    data = request.get_json() or {}
+    
+    new_password = data.get('password') or data.get('new_password')
+    if not new_password:
+        return Responses.error(
+            "Se requiere el campo 'password' o 'new_password'",
+            http_code=422,
+            code="VALIDATION_ERROR"
+        )
+    
+    try:
+        updated = user_service.reset_password(user_id, new_password)
+        if not updated:
+            return Responses.error("Usuario no encontrado", http_code=404, code="NOT_FOUND")
+        return Responses.success(message="Contraseña actualizada correctamente")
+    except Exception as ex:
+        return Responses.from_exception(ex)

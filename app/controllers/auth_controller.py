@@ -59,3 +59,43 @@ def refresh():
         "access_token": new_access_token,
         "token": new_access_token  # Alias por compatibilidad
     }, message="Token renovado")
+
+@auth_bp.route('/change-password', methods=['PUT'])
+def change_password():
+    """Endpoint para que el usuario autenticado cambie su propia contraseña"""
+    auth = request.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        return Responses.error("Token de autorización requerido", http_code=401, code="NO_TOKEN")
+    
+    token = auth.split(' ', 1)[1].strip()
+    
+    try:
+        payload = jwt.decode(token, current_app.config['JWT_SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload.get('sub')
+        
+        if not user_id:
+            return Responses.error("Token inválido", http_code=401, code="INVALID_TOKEN")
+        
+    except jwt.ExpiredSignatureError:
+        return Responses.error("Token expirado", http_code=401, code="TOKEN_EXPIRED")
+    except jwt.InvalidTokenError:
+        return Responses.error("Token inválido", http_code=401, code="TOKEN_INVALID")
+    
+    data = request.get_json() or {}
+    current_password = data.get('current_password') or data.get('contraseña_actual')
+    new_password = data.get('new_password') or data.get('nueva_contraseña')
+    
+    if not current_password or not new_password:
+        return Responses.error(
+            "Se requieren los campos 'current_password' y 'new_password'",
+            http_code=422,
+            code="VALIDATION_ERROR"
+        )
+    
+    try:
+        success = auth_service.change_password(user_id, current_password, new_password)
+        if not success:
+            return Responses.error("Contraseña actual incorrecta", http_code=401, code="WRONG_PASSWORD")
+        return Responses.success(message="Contraseña actualizada correctamente")
+    except Exception as ex:
+        return Responses.from_exception(ex)

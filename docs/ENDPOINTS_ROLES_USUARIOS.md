@@ -372,11 +372,79 @@ DELETE /api/users/:id
 
 ---
 
+### 13. Resetear Contraseña de Usuario (Admin)
+```http
+PUT /api/users/:id/password
+```
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Request:**
+```json
+{
+  "password": "nueva_contraseña_123"
+}
+```
+
+**Nota:** Este endpoint permite al **administrador** resetear la contraseña de cualquier usuario **sin necesitar la contraseña anterior**. Útil para recuperación de cuentas.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Contraseña actualizada correctamente"
+}
+```
+
+---
+
+### 14. Cambiar Propia Contraseña (Usuario Autenticado)
+```http
+PUT /api/auth/change-password
+```
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Request:**
+```json
+{
+  "current_password": "contraseña_actual",
+  "new_password": "nueva_contraseña_123"
+}
+```
+
+**Nota:** Este endpoint permite al **usuario autenticado** cambiar su **propia contraseña**. Requiere la contraseña actual por seguridad.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Contraseña actualizada correctamente"
+}
+```
+
+**Error (contraseña actual incorrecta):**
+```json
+{
+  "success": false,
+  "message": "Contraseña actual incorrecta",
+  "code": "WRONG_PASSWORD"
+}
+```
+
+---
+
 ## 🔗 GESTIÓN AVANZADA DE ROLES (Alternativa)
 
 Si prefieres manejar los roles por separado en lugar de incluirlos en el usuario:
 
-### 13. Listar Roles de un Usuario
+### 15. Listar Roles de un Usuario
 ```http
 GET /api/user-roles/user/:user_id
 ```
@@ -397,7 +465,7 @@ GET /api/user-roles/user/:user_id
 
 ---
 
-### 14. Asignar Rol Individual a Usuario
+### 16. Asignar Rol Individual a Usuario
 ```http
 POST /api/user-roles
 ```
@@ -412,7 +480,7 @@ POST /api/user-roles
 
 ---
 
-### 15. Quitar Rol de Usuario
+### 17. Quitar Rol de Usuario
 ```http
 DELETE /api/user-roles
 ```
@@ -614,6 +682,11 @@ DELETE /api/user-roles
     <input type="password" pInputText [(ngModel)]="userForm.password" />
   </div>
   
+  <div class="p-field" *ngIf="editingUser">
+    <label>Cambiar Contraseña</label>
+    <button pButton label="Resetear Contraseña" icon="pi pi-key" (click)="showResetPasswordDialog(editingUser)"></button>
+  </div>
+  
   <div class="p-field">
     <label>Roles</label>
     <p-multiSelect 
@@ -628,6 +701,19 @@ DELETE /api/user-roles
   <ng-template pTemplate="footer">
     <button pButton label="Cancelar" (click)="displayUserDialog=false"></button>
     <button pButton label="Guardar" (click)="saveUser()"></button>
+  </ng-template>
+</p-dialog>
+
+<!-- Dialog para resetear contraseña (Admin) -->
+<p-dialog [(visible)]="displayResetPasswordDialog" header="Resetear Contraseña">
+  <div class="p-field">
+    <label>Nueva Contraseña para {{resetPasswordUser?.name}}</label>
+    <input type="password" pInputText [(ngModel)]="newPassword" placeholder="Nueva contraseña" />
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <button pButton label="Cancelar" (click)="displayResetPasswordDialog=false"></button>
+    <button pButton label="Resetear" (click)="resetPassword()"></button>
   </ng-template>
 </p-dialog>
 ```
@@ -718,6 +804,9 @@ export class UsersComponent implements OnInit {
   userForm = { name: '', email: '', password: '', role_ids: [] };
   editingUser: any = null;
   displayUserDialog = false;
+  displayResetPasswordDialog = false;
+  resetPasswordUser: any = null;
+  newPassword: string = '';
 
   ngOnInit() {
     this.loadUsers();
@@ -757,6 +846,25 @@ export class UsersComponent implements OnInit {
       this.loadUsers();
     });
   }
+
+  showResetPasswordDialog(user: any) {
+    this.resetPasswordUser = user;
+    this.newPassword = '';
+    this.displayResetPasswordDialog = true;
+  }
+
+  resetPassword() {
+    this.http.put(`/api/users/${this.resetPasswordUser.id}/password`, {
+      password: this.newPassword
+    }).subscribe(() => {
+      this.displayResetPasswordDialog = false;
+      this.messageService.add({ 
+        severity: 'success', 
+        summary: 'Éxito', 
+        detail: 'Contraseña actualizada correctamente' 
+      });
+    });
+  }
 }
 ```
 
@@ -775,11 +883,22 @@ export class UsersComponent implements OnInit {
 - ✅ Crear usuario con roles: `POST /api/users` + `role_ids: [...]`
 - ✅ Actualizar usuario con roles: `PUT /api/users/:id` + `role_ids: [...]`
 - ✅ Listar roles disponibles: `GET /api/roles`
+- ✅ **Resetear contraseña (Admin):** `PUT /api/users/:id/password`
+- ✅ **Cambiar propia contraseña:** `PUT /api/auth/change-password`
 
 ### **Cambios Aplicados:**
 1. ✅ `GET /api/users` ahora requiere autenticación y filtra por `org_id`
 2. ✅ Usuarios de diferentes organizaciones están separados
 3. ✅ Ya existen endpoints para asignar roles a usuarios (`role_ids` en POST/PUT)
 4. ✅ Ya existen endpoints para asignar permisos a roles (`/api/role-resources`)
+5. ✅ **Endpoint separado para cambio de contraseña por admin** (`/api/users/:id/password`)
+6. ✅ **Endpoint separado para cambio de contraseña por usuario** (`/api/auth/change-password`)
 
 **No necesitas combinar endpoints** - cada operación tiene su endpoint específico.
+
+### **Seguridad de Contraseñas:**
+- ⚠️ Las contraseñas **NUNCA** se muestran en los responses
+- ⚠️ Las contraseñas **NUNCA** se incluyen en `GET /api/users` o `GET /api/users/:id`
+- ✅ Admin puede resetear contraseñas **sin necesitar la actual**
+- ✅ Usuario debe proporcionar contraseña actual para cambiarla
+- ✅ Todas las contraseñas se hashean automáticamente con `werkzeug.security`

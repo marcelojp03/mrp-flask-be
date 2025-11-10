@@ -1,5 +1,6 @@
 # services/auth_service.py
 from datetime import datetime, timedelta
+from typing import Optional
 from app.db import db
 from app.models.user import User
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -60,3 +61,19 @@ class AuthService:
             return data
         except Exception:
             return None
+
+    def change_password(self, user_id: int, current_password: str, new_password: str) -> bool:
+        """Cambiar contraseña del usuario autenticado (requiere contraseña actual)"""
+        u: User = User.query.get(user_id)
+        if not u:
+            return False
+        
+        # Verificar contraseña actual
+        ok = check_password_hash(u.password, current_password) if u.password else (u.password == current_password)
+        if not ok:
+            return False
+        
+        # Actualizar a la nueva contraseña
+        u.password = generate_password_hash(new_password) if new_password and not new_password.startswith('pbkdf2:') else new_password
+        db.session.commit()
+        return True
