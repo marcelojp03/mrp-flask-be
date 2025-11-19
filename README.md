@@ -1,52 +1,43 @@
-# 🏭 MRP Backend - Sistema de Planificación de Requerimientos de Materiales
+# MRP Backend
 
-Backend Flask para sistema MRP (Material Requirements Planning) con arquitectura multi-tenant SaaS.
+Backend Flask para sistema MRP (Material Requirements Planning) con arquitectura multi-tenant.
 
-## 🚀 Stack Tecnológico
+## Inicio Rápido
 
-- **Framework**: Flask 3.x
-- **ORM**: SQLAlchemy 2.x
-- **Base de Datos**: PostgreSQL 14+
-- **Autenticación**: JWT custom
-- **Container**: Docker + AWS ECR
-
----
-
-## 🛠️ Instalación y Ejecución
-
-### 1️⃣ Requisitos Previos
+### Requisitos Previos
 - Python 3.11+
 - PostgreSQL 14+
 - Git
 
-### 2️⃣ Clonar e Instalar
+### Instalación
 
+1. Clonar repositorio:
 ```bash
-# Clonar repositorio
 git clone https://github.com/marcelojp03/mrp-flask-be.git
 cd mrp-flask-be
+```
 
+2. Crear y activar entorno virtual:
+```bash
 # Crear entorno virtual
 python -m venv env
 
-# Activar entorno virtual
-# Windows PowerShell:
+# Activar (Windows PowerShell)
 .\env\Scripts\activate
-# Linux/macOS:
-source env/bin/activate
 
-# Instalar dependencias
+# Activar (Linux/macOS)
+source env/bin/activate
+```
+
+3. Instalar dependencias:
+```bash
 pip install -r requirements.txt
 ```
 
-### 3️⃣ Configurar Base de Datos
+4. Configurar variables de entorno:
 
-```bash
-# Crear base de datos PostgreSQL
-createdb mrp
-
-# Configurar variables de entorno
-# Crear archivo .env con:
+Crear archivo `.env` en la raíz:
+```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=tu_usuario
@@ -55,136 +46,96 @@ DB_NAME=mrp
 JWT_SECRET_KEY=tu_secreto_jwt_seguro
 ```
 
-**⚠️ IMPORTANTE**: Nunca commitear archivos `.env` con credenciales reales.
-
-### 4️⃣ Inicializar Base de Datos
-
+5. Inicializar base de datos:
 ```bash
+# Crear base de datos
+createdb mrp
+
 # Ejecutar migraciones
 python scripts/database/create_tables.py
-
-# Poblar datos iniciales (opcional)
-python scripts/database/populate_database.py
 ```
 
-### 5️⃣ Ejecutar Aplicación
-
+6. Ejecutar aplicación:
 ```bash
-# Modo desarrollo
 python run.py
-
-# La aplicación estará disponible en:
-# http://localhost:4646
 ```
 
-### 6️⃣ Verificar Instalación
+La aplicación estará disponible en: `http://localhost:4646`
+
+### Verificar Instalación
 
 ```bash
-# Test de conexión a DB
-python tests/integration/test_db_connection.py
-
 # Health check
 curl http://localhost:4646/health
+
+# Test de conexión a BD
+python tests/integration/test_db_connection.py
 ```
 
----
+## Docker
 
-## 🐳 Ejecutar con Docker
-
+### Usando Docker Compose
 ```bash
-# Build
+docker-compose up -d
+```
+
+### Construir imagen manualmente
+```bash
 docker build -t mrp-backend .
 
-# Run
 docker run -p 4646:4646 \
   -e DB_HOST=host.docker.internal \
   -e DB_PASS=yourpassword \
   mrp-backend
-
-# O usar Docker Compose
-docker-compose up -d
 ```
 
----
+## Documentación
 
-## 📁 Estructura del Proyecto
+- [Información del Proyecto](docs/PROJECT_INFO.md) - Arquitectura, stack tecnológico, sprints
+- [Endpoints API](docs/ENDPOINTS_COMPLETE_LIST.md) - Referencia completa de API
+- [Deployment](docs/DEPLOY_ECR_SUMMARY.md) - Guía de deployment a AWS
+- [Guías](docs/guides/) - Guías de uso específicas
 
-```
-mrp_flask_be/
-├── app/                    # Código fuente principal
-│   ├── controllers/       # Endpoints REST
-│   ├── models/           # Modelos SQLAlchemy
-│   ├── services/         # Lógica de negocio
-│   ├── entities/         # DTOs y entidades
-│   ├── config.py         # Configuración
-│   └── db.py             # Database setup
-├── migrations/           # SQL migrations
-├── seeds/               # Datos iniciales
-├── scripts/             # Scripts de utilidad
-│   ├── database/       # Scripts de BD
-│   ├── setup/          # Setup inicial
-│   ├── deploy/         # Deployment
-│   └── testing/        # Tests PowerShell
-├── tests/              # Tests
-│   └── integration/    # Tests de integración
-├── docs/               # Documentación
-├── run.py             # Punto de entrada
-└── requirements.txt   # Dependencias Python
-```
-
-Ver documentación completa de estructura en [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md)
-
----
-
-## 📖 Documentación
-
-| Documento | Descripción |
-|-----------|-------------|
-| [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) | Estructura completa del proyecto |
-| [`docs/ENDPOINTS_COMPLETE_LIST.md`](docs/ENDPOINTS_COMPLETE_LIST.md) | Referencia de API |
-| [`docs/guides/`](docs/guides/) | Guías de uso |
-
----
-
-## 🧪 Testing
+## Testing
 
 ```bash
 # Tests de integración
 python tests/integration/test_fixed_endpoints.py
 
-# Tests PowerShell (requiere servidor corriendo)
-.\scripts\testing\test-all-endpoints.ps1
+# Tests de Sprint 4/5
+python test_sprint4_sprint5.py
 ```
 
----
+## Estructura del Proyecto
 
-## 🚢 Deploy a AWS ECR
-
-```bash
-# Windows PowerShell
-.\scripts\deploy\deploy-ecr.ps1
-
-# Linux/macOS
-./scripts/deploy/deploy-ecr.sh
+```
+mrp_flask_be/
+├── app/                # Código fuente
+│   ├── controllers/   # Endpoints REST
+│   ├── models/       # Modelos SQLAlchemy
+│   └── services/     # Lógica de negocio
+├── auth/             # Autenticación JWT
+├── migrations/       # Migraciones SQL
+├── scripts/          # Scripts de utilidad
+├── tests/            # Tests
+├── docs/             # Documentación
+└── run.py           # Punto de entrada
 ```
 
----
+Ver estructura completa en [PROJECT_INFO.md](docs/PROJECT_INFO.md)
 
-## � Sprints Implementados
+## Tecnologías
 
-- ✅ **Sprint 1**: Core MRP (Usuarios, Roles, Productos, Inventario)
-- ✅ **Sprint 2**: SaaS Multi-Tenant (Signup, Planes, Menú Dinámico)
-- ✅ **Sprint 3**: Producción (BOMs, Work Orders, Trazabilidad)
-- ⏳ **Sprint 4**: Planificación (MPS, MRP)
-- ⏳ **Sprint 5**: Analytics (Forecasting, IA)
+- Flask 3.x
+- SQLAlchemy 2.x
+- PostgreSQL 14+
+- JWT Authentication
+- Docker
 
----
-
-## 🤝 Contribución
+## Contribución
 
 Proyecto académico - UAGRM Sistemas de Información 2
 
----
+## Repositorio
 
-**Versión**: Sprint 3 - 2025  
-**Repositorio**: [marcelojp03/mrp-flask-be](https://github.com/marcelojp03/mrp-flask-be)
+[github.com/marcelojp03/mrp-flask-be](https://github.com/marcelojp03/mrp-flask-be)

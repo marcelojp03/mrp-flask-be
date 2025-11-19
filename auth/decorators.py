@@ -32,5 +32,9 @@ def auth_required(fn):
         g.org_id = payload.get('org_id')
         if not g.user_id:
             return Responses.error("Token inválido (sin sub)", http_code=401, code="TOKEN_INVALID")
+        
+        # Inyectar org_id y user_id como parámetros a la función
+        kwargs['org_id'] = g.org_id
+        kwargs['user_id'] = g.user_id
         return fn(*args, **kwargs)
     return wrapper
